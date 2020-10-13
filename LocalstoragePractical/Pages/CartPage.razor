@@ -3,12 +3,12 @@
 @inject ICartService CartService
 @inject ILocalStorageService LocalStorageService
 Welcome to the shopping cart.
-@if (cart == null)
+@if (CartVM == null)
 {
     <p>Loading...</p> }
 else
 {
-    <h5>Total :@String.Format("{0:0.##}", cart.Items.Sum(d => d.Price * d.Quantity))</h5>
+    
     <table class="table">
         <thead>
             <tr>
@@ -20,7 +20,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in cart.Items)
+            @foreach (var item in CartVM.Items)
             {
                 <tr @key="item">
                     <td>@item.Name</td>
@@ -40,6 +40,11 @@ else
                     </td>
                 </tr>
             }
+            <tr>
+                <td colspan="5">
+                    <h5 style="float:right">Total :@String.Format("{0:0.##}", CartVM.Items.Sum(d => d.Price * d.Quantity))</h5>
+                </td>
+            </tr>
         </tbody>
     </table>
     <AddItem @ref="AddItem"
@@ -50,14 +55,20 @@ else
 
 
 @code {
-    Cart cart;
-    protected override void OnInitialized()
+
+    public Cart CartVM { set; get; }
+
+    protected override async Task OnInitializedAsync()
     {
-        cart = CartService.Cart;
+        CartVM = await LocalStorageService.GetItemAsync<Cart>("cart");
+        if (CartVM == null)
+        {
+            CartVM = CartService.Cart;
+        }
     }
-    async Task SaveCardAsync()
+    private async Task SaveCardAsync()
     {
-        await LocalStorageService.SetItemAsync<Cart>("cart", cart);
+        await LocalStorageService.SetItemAsync<Cart>("cart", CartVM);
 
         CartService.RaiseCartChanged();
     }
@@ -65,13 +76,13 @@ else
     {
         var val = e.Value.ToString();
         var intVal = int.Parse(val);
-        cart.Items.Find(d => d.Name == item.Name).Quantity = (intVal>0?intVal:1);
+        CartVM.Items.Find(d => d.Name == item.Name).Quantity = (intVal>0?intVal:1);
 
         await SaveCardAsync();
     }
     async Task Remove(Item item)
     {
-        cart.Items.Remove(item);
+        CartVM.Items.Remove(item);
 
         await SaveCardAsync();
     }
@@ -79,14 +90,14 @@ else
     public AddItem AddItem { get; set; }
     protected async void OnDialogClose(Item item)
     {
-        var check = cart.Items.FirstOrDefault(d => d.Name == item.Name.Trim());
+        var check = CartVM.Items.FirstOrDefault(d => d.Name == item.Name.Trim());
         if (check!=null)
         {
             check.Quantity += item.Quantity;
         }
         else
         {
-            cart.Items.Add(item);
+            CartVM.Items.Add(item);
         }
 
         await SaveCardAsync();
