@@ -22,7 +22,7 @@ else
         <tbody>
             @foreach (var item in cart.Items)
             {
-                <tr>
+                <tr @key="item">
                     <td>@item.Name</td>
                     <td>@item.Price</td>
                     <td>
