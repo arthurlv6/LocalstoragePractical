@@ -16,6 +16,7 @@ namespace LocalstoragePractical.Components
 
         public async Task Show()
         {
+            ItemVM= new Item() { Quantity = 1, Price = 12.23 };
             ShowDialog = true;
         }
         public void Close()

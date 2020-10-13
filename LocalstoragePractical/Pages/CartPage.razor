@@ -79,7 +79,16 @@ else
     public AddItem AddItem { get; set; }
     protected async void OnDialogClose(Item item)
     {
-        cart.Items.Add(item);
+        var check = cart.Items.FirstOrDefault(d => d.Name == item.Name.Trim());
+        if (check!=null)
+        {
+            check.Quantity += item.Quantity;
+        }
+        else
+        {
+            cart.Items.Add(item);
+        }
+
         await SaveCardAsync();
     }
 
