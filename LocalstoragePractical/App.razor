@@ -1,0 +1,31 @@
+@inject ICartService CartService
+@inject ILocalStorageService LocalStorageService
+<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p>Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+@code{ 
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeCartFromLocalStorageAsync();
+        }
+    }
+
+    private async Task InitializeCartFromLocalStorageAsync()
+    {
+        var cart = await LocalStorageService.GetItemAsync<Cart>("cart");
+        if (cart != null)
+        {
+            CartService.Cart = cart;
+            CartService.RaiseCartChanged();
+        }
+    }
+}

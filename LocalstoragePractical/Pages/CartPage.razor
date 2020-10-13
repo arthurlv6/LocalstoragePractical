@@ -1,0 +1,90 @@
+﻿@page "/cart"
+
+@inject ICartService CartService
+@inject ILocalStorageService LocalStorageService
+Welcome to the shopping cart.
+@if (cart == null)
+{
+    <p>Loading...</p> }
+else
+{
+    <h5>Total :@String.Format("{0:0.##}", cart.Items.Sum(d => d.Price * d.Quantity))</h5>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>SubTotal</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in cart.Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Price</td>
+                    <td>
+                        <input type="number" class="form-control" style="width:100px;"
+                               value=@item.Quantity
+                               @onchange="@(e=>Change(e,item))" />
+                    </td>
+                    <td>
+                        @String.Format("{0:0.##}", item.Price * item.Quantity)
+                    </td>
+                    <td>
+                        <a style="color:red;cursor:pointer" @onclick="@(() => Remove(item))">
+                            Remove
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <AddItem @ref="AddItem"
+                CloseEventCallback="@OnDialogClose"></AddItem>
+
+    <button class="btn btn-primary edit-btn" @onclick="ShowAddNew">Add</button>
+}
+
+
+@code {
+    Cart cart;
+    protected override void OnInitialized()
+    {
+        cart = CartService.Cart;
+    }
+    async Task SaveCardAsync()
+    {
+        await LocalStorageService.SetItemAsync<Cart>("cart", cart);
+
+        CartService.RaiseCartChanged();
+    }
+    async Task Change(ChangeEventArgs e, Item item)
+    {
+        var val = e.Value.ToString();
+        var intVal = int.Parse(val);
+        cart.Items.Find(d => d.Name == item.Name).Quantity = (intVal>0?intVal:1);
+
+        await SaveCardAsync();
+    }
+    async Task Remove(Item item)
+    {
+        cart.Items.Remove(item);
+
+        await SaveCardAsync();
+    }
+
+    public AddItem AddItem { get; set; }
+    protected async void OnDialogClose(Item item)
+    {
+        cart.Items.Add(item);
+        await SaveCardAsync();
+    }
+
+    protected async Task ShowAddNew()
+    {
+        await AddItem.Show();
+    }
+}
